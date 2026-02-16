@@ -15,13 +15,12 @@ int main() {
 
     wait(1.0);   // 1 second delay
 
-    while (true) {
-        // Turn motor fully on
-        motor_enable = 1;
-        motor_pwm_a.period_us(100); //Each pulse lasts 0.1ms
-        motor_pwm_a.pulsewidth_us(75); //75us running, 25us not running
+    // Turn motor fully on
+    motor_enable = 1;
+    motor_pwm_a.period_us(100); //Each pulse lasts 0.1ms
+    motor_pwm_a.pulsewidth_us(75); //75us running, 25us not running       
 
-        // Stay on forever
-        wait(1.0);
+    while (true) {
+        //Make it run for ever
     }
 }

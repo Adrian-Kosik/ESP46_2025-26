@@ -1,7 +1,14 @@
-this is the plan?
+This is the plan:
 
 1. Write code
 2. Run code
 3. Party
 
-Really C? How to connect software and hardware. How to read or how we know which ports we should use for sensors?
+
+The side plan:
+
+1. Figure out how to PWM and direction the motors
+2. Figure out how to collect the sensor data
+3. Create a PID equation based on sensor data
+4. Create a variable for PWM to get adjusted based on PID equation
+5. Play with the variables to see if we can increase speed
