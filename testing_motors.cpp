@@ -13,14 +13,30 @@ int main() {
     // Start with everything off
     motor_enable = 0;
 
+
     wait(1.0);   // 1 second delay
 
     // Turn motor fully on
     motor_enable = 1;
     motor_pwm_a.period_us(100); //Each pulse lasts 0.1ms
-    motor_pwm_a.pulsewidth_us(75); //75us running, 25us not running       
-
+    motor_pwm_b.period_us(100); //Each pulse lasts 0.1ms
+    //Set the motor to run in unipolar mode
+    motor_bipolar_a = 0;
+    motor_bipolar_b = 0;
+    //Set the directions to go forward
+    motor_dir_a = 1;
+    motor_dir_b = 1;
+    
     while (true) {
         //Make it run for ever
+        motor_pwm_a.pulsewidth_us(75); //75us running, 25us not running  
+        motor_pwm_b.pulsewidth_us(75); //75us running, 25us not running       
+
+        wait(2);
+
+        motor_pwm_a.pulsewidth_us(25);      
+        motor_pwm_b.pulsewidth_us(25); 
+
+        wait(2);
     }
 }

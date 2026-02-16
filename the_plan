@@ -12,3 +12,4 @@ The side plan:
 3. Create a PID equation based on sensor data
 4. Create a variable for PWM to get adjusted based on PID equation
 5. Play with the variables to see if we can increase speed
+6. Figure out the Bluetooth connection and interrupt
