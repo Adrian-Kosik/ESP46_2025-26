@@ -13,3 +13,18 @@ The side plan:
 4. Create a variable for PWM to get adjusted based on PID equation
 5. Play with the variables to see if we can increase speed
 6. Figure out the Bluetooth connection and interrupt
+
+TD1
+1. Successful use of PWM output (10) - Show run-time control of duty cycle on oscilloscope [TP1 / TP8 for L1 test, TP2 / TP6 for R1 test]
+
+2. Drive both motors (15) - Motors run at two different speeds for the motors.  
+
+3. Measure signal from the encoder (10) - Display to indicate that the microcontroller can detect edges of encoder signal
+
+4. Components and boards fitted with wiring (10)
+
+5. Mechanical finishing (5) - Gears rotate smoothly. Check for rough/sharp edges at cuts and drilled surfaces
+
+6. Independent control of buggy wheels (30) - Buggy should trace a 0.5m square on the floor. Then turn around and re-trace square back.
+
+7. Presentation (20) - everyone answer questions
