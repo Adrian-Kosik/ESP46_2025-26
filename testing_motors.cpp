@@ -3,8 +3,8 @@
 
 
 // This code is for testing the motor control on the board. It will turn the motor on at full speed and keep it running indefinitely.
-DigitalOut motor_enable(PB_2);   // Enable 
-PwmOut motor_pwm_a(PB_1);      // PWM1 
+DigitalOut motor_enable(PB_2);      // Enable 
+PwmOut motor_pwm_a(PA_11);      // PWM1 
 PwmOut motor_pwm_b(PB_15);      // PWM2  
 DigitalOut motor_dir_a(PB_14);      // DIR   
 DigitalOut motor_dir_b(PB_13);      // DIR   
@@ -62,8 +62,6 @@ class SamplingPotentiometer : public Potentiometer {
 SamplingPotentiometer potL1(A0, 3.3, 20);
 SamplingPotentiometer potR1(A1, 3.3, 20);
 
-// AnalogIn potL1(A1);
-// AnalogIn potR1(A0);
 class Joystick { //Class copied from lecture notes and then built on top of to make it work
     private: 
         DigitalIn up, down, left, right, fire; 
@@ -99,45 +97,34 @@ class Joystick { //Class copied from lecture notes and then built on top of to m
 Joystick stick(A2, A3, A4, A5, D4);
 
 int main() {
-    // Start with everything off
+    // Start with motors off
     motor_enable = 0;
 
-    // Turn motor fully on
-    
     motor_pwm_a.period_us(100); //Each pulse lasts 0.1ms
-    motor_pwm_b.period_us(100); //Each pulse lasts 0.1ms
+    motor_pwm_b.period_us(100);
 
     //Set the motor to run in unipolar mode
     motor_bipolar_a = 0;
     motor_bipolar_b = 0;
     
     //Set the directions to go forward
-    motor_dir_a = 0; //goes back
-    motor_dir_b = 0;
-
-    int run = 0;
+    motor_dir_a = 1; //0 goes back, 1 forwards
+    motor_dir_b = 1;
 
     while (true) {
         //Make it run for ever
 
-        if (stick.firePressed()==1) {
+        if (stick.firePressed()==1) { //Create an on/off button
             motor_enable = !motor_enable;
-            wait(0.1);
+            wait(0.5);
         };
 
-        // int val_x = potL1.amplitudeNorm();
-        // int val_y = potR1.amplitudeNorm();
-
+        //Testing the values from the potentiomenters and display on the LCD screen
         lcd.locate(1,10);
         lcd.printf("%.2f and %.2f", potL1.amplitudeNorm(), potR1.amplitudeNorm());   
-
-        // motor_pwm_a.pulsewidth_us(val_x); //75us running, 25us not running  
-        // motor_pwm_b.pulsewidth_us(val_y); //75us running, 25us not running  
-        // motor_pwm_a.write(potL1.amplitudeNorm());
-        // motor_pwm_b.write(potR1.amplitudeNorm());
-        // motor_pwm_a.write(potL1.read());
-        // motor_pwm_b.write(potR1.read());
-
-        // wait(0.1);
+        
+        //Motors will run with a PWM based on the 0-1 value from the potentiomenters
+        motor_pwm_a = potL1.amplitudeNorm();
+        motor_pwm_b = potR1.amplitudeNorm();
     };
 }

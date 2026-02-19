@@ -1,3 +1,3 @@
 #include "mbed.h"
 
-//Figure out bluetooth
+//Figure out bluetooth - Ethan?
