@@ -1,6 +1,7 @@
 #include "mbed.h" //https://os.mbed.com/docs/mbed-os/v6.16/debug-test/visual-studio-code.html
 #include "C12832.h"
 
+
 // This code is for testing the motor control on the board. It will turn the motor on at full speed and keep it running indefinitely.
 DigitalOut motor_enable(PB_2);   // Enable 
 PwmOut motor_pwm_a(PB_1);      // PWM1 
@@ -61,14 +62,48 @@ class SamplingPotentiometer : public Potentiometer {
 SamplingPotentiometer potL1(A0, 3.3, 20);
 SamplingPotentiometer potR1(A1, 3.3, 20);
 
+// AnalogIn potL1(A1);
+// AnalogIn potR1(A0);
+class Joystick { //Class copied from lecture notes and then built on top of to make it work
+    private: 
+        DigitalIn up, down, left, right, fire; 
+    public: 
+        Joystick(PinName u, PinName d, PinName l, PinName r, PinName f) : //Joystick class constructor that will collect user entered pin values to use
+            up(u), down(d), left(l), right(r), fire(f) {}; 
+        bool upPressed(void){ //Creates a boolean member function that will return true when the up pin is toggled, and false otherwise
+            if(up==1) {
+                return true;
+            } else
+                return false; }
+        bool downPressed(void){
+            if(down==1) {
+                return true;
+            } else
+                return false; }
+        bool leftPressed(void){
+            if(left==1) {
+                return true;
+            } else
+                return false; }
+        bool rightPressed(void){
+            if(right==1) {
+                return true;
+            } else
+                return false; }
+        bool firePressed(void){
+            if(fire==1) {
+                return true;
+            } else
+                return false; }
+};
+Joystick stick(A2, A3, A4, A5, D4);
+
 int main() {
     // Start with everything off
     motor_enable = 0;
 
-    wait(1.0);   // 1 second delay
-
     // Turn motor fully on
-    motor_enable = 1;
+    
     motor_pwm_a.period_us(100); //Each pulse lasts 0.1ms
     motor_pwm_b.period_us(100); //Each pulse lasts 0.1ms
 
@@ -77,21 +112,32 @@ int main() {
     motor_bipolar_b = 0;
     
     //Set the directions to go forward
-    motor_dir_a = 1; //goes back
+    motor_dir_a = 0; //goes back
     motor_dir_b = 0;
-    
+
+    int run = 0;
+
     while (true) {
         //Make it run for ever
 
-        int val_x = potL1.amplitudeNorm()*100;
-        int val_y = potR1.amplitudeNorm()*100;
+        if (stick.firePressed()==1) {
+            motor_enable = !motor_enable;
+            wait(0.1);
+        };
 
-        motor_pwm_a.pulsewidth_us(val_x); //75us running, 25us not running  
-        motor_pwm_b.pulsewidth_us(val_y); //75us running, 25us not running  
+        // int val_x = potL1.amplitudeNorm();
+        // int val_y = potR1.amplitudeNorm();
 
         lcd.locate(1,10);
-        lcd.printf("%d and %d", val_x, val_y);     
+        lcd.printf("%.2f and %.2f", potL1.amplitudeNorm(), potR1.amplitudeNorm());   
 
-        wait(0.1);
+        // motor_pwm_a.pulsewidth_us(val_x); //75us running, 25us not running  
+        // motor_pwm_b.pulsewidth_us(val_y); //75us running, 25us not running  
+        // motor_pwm_a.write(potL1.amplitudeNorm());
+        // motor_pwm_b.write(potR1.amplitudeNorm());
+        // motor_pwm_a.write(potL1.read());
+        // motor_pwm_b.write(potR1.read());
+
+        // wait(0.1);
     };
 }
