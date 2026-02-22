@@ -1,0 +1,93 @@
+//Here, using port1 as Lmotor port2 as Rmotor (Blue is go right, Red is go left, purple is go straight, green is stop)
+//Please ignore those Chinese characters. Those important messages have been translated.
+#include "mbed.h"
+#include "C12832.h"
+#include <math.h>
+
+//for simulation
+PwmOut red_led(D5);
+PwmOut blue_led(D8);
+PwmOut green_led(D9);//for simulated，Left0 is BLUE,R0 is RED, Stop is Green, max v in straight is purple, not max v is flashing
+//class SimulatedControl{
+    //private:
+    //    PwmOut red_led;
+    //    PwmOut blue_led;
+    //    PwmOut green_led;//for PWM Logic
+    //public:
+    //    SimulatedControl(PinName redPin, PinName bluePin, PinName greenPin)//, float L, float R, float T)
+    //    : red_led(redPin), blue_led(bluePin), green_led(greenPin){        
+    //    };
+//};
+//SimulatedControl(D5,D8,D9,0.9,0.9,1.0);
+
+//条件一，传感器
+//假设1：AtoD 假定大于4v为黑（4-5v），小于1v为白（0-1v），中间值说明踩线 translate below
+//Assume, 4-5v is dark for sure, 0-1v is white for sure
+//AnalogIn s1(A0), s2(A1), s3(A2), s4(A3), s5(A4), s6(A5);Sensors pin？
+//float Sensor[6] = {0};
+//void readSensors(){Sensor[0] = s1.read();Sensor[1] = s2.read();Sensor[2] = s3.read();Sensor[3] = s4.read();Sensor[4] = s5.read();Sensor[5] = s6.read();}
+//需要调整为0-5v:Need to change the value we read into 0-5v
+//use potentiometer
+class Potentiometer                                                     //Begin updated potentiometer class definition
+{
+private:                                                                //Private data member declaration
+    AnalogIn inputSignal;                                               //Declaration of AnalogIn object
+    float VDD, currentSampleNorm, currentSampleVolts;                   //Float variable to speficy the value of VDD (3.3 V for the Nucleo-64)
+public:                                                                 // Public declarations
+    Potentiometer(PinName pin, float v) : inputSignal(pin), VDD(v) {}   //Constructor - user provided pin name assigned to AnalogIn...
+                                                                        //VDD is also provided to determine maximum measurable voltage
+    float amplitudeVolts(void)                                          //Public member function to measure the amplitude in volts
+    {
+        return (inputSignal.read()*VDD);                                //Scales the 0.0-1.0 value by VDD to read the input in volts
+    }
+    float amplitudeNorm(void)                                           //Public member function to measure the normalised amplitude
+    {
+        return inputSignal.read();                                      //Returns the ADC value normalised to range 0.0 - 1.0
+    }
+    void sample(void)                                                   //Public member function to read a sample and store the value as data members
+    {
+        currentSampleNorm = inputSignal.read();                         //Read a sample from the ADC and store normalised representation [0..1]
+        currentSampleVolts = currentSampleNorm*VDD;                     //Convert this to a voltage and store that as a data member too.
+    }
+    const float getCurrentSampleNorm(void)                              //Public member function to return the most recent normalised sample [0..1]
+    {
+        return currentSampleNorm;                                       //Return the most recent normalised sample
+    }
+    const float getCurrentSampleVolts(void)                             //Public member function to return the most recent sampled voltage [0.. 3.3 V]
+    {
+        return currentSampleVolts;                                      //Return the most recent sampled voltage
+    }
+};
+class SamplingPotentiometer: public Potentiometer{
+    private:
+        float samplingFrequency, samplingPeriod;
+        Ticker sampler;
+    public: 
+        SamplingPotentiometer(PinName pin, float v, float fs): Potentiometer(pin, v), samplingFrequency(fs){
+            samplingPeriod = 1.0f / samplingFrequency;
+            sampler.attach(callback(this, &Potentiometer::sample), samplingPeriod);//this: pointer, adress--&; 
+        };
+};
+SamplingPotentiometer pot1(A0,3.3f,100);
+SamplingPotentiometer pot2(A1,3.3f,100);
+//end potentiometer
+
+int main()
+{
+    float T=1.0;
+    red_led.period(T);
+    blue_led.period(T);//decide duty cycle
+    green_led.period(T);
+    while (1) {
+        //readSensors();for sensors
+        float L = 0.9f * pot1.getCurrentSampleNorm();
+        float R = 0.9f * pot2.getCurrentSampleNorm();
+        //Set
+        float DLon=(0.9-L)/0.9;
+        float DRon=(0.9-R)/0.9;
+        //PWM Logic
+            if(L>=0.899 and R>=0.899){blue_led.write(1.0f);red_led.write(1.0f);green_led.write(0.0f);}
+            else{blue_led.write(DLon);red_led.write(DRon);green_led.write(1.0f);}
+        //wait(0.01f);
+    }
+}
