@@ -1,9 +1,10 @@
 #include "mbed.h" //https://os.mbed.com/docs/mbed-os/v6.16/debug-test/visual-studio-code.html
-#include "C12832.h"
+#include "C12832.h" //Library to control shield board
+#include "QEI.h"  //Library to read motor encoders
 
 
 // This code is for testing the motor control on the board. It will turn the motor on at full speed and keep it running indefinitely.
-DigitalOut motor_enable(PB_2);      // Enable 
+DigitalOut motor_enable(PB_2);   // Enable 
 PwmOut motor_pwm_a(PA_11);      // PWM1 
 PwmOut motor_pwm_b(PB_15);      // PWM2  
 DigitalOut motor_dir_a(PB_14);      // DIR   
@@ -96,35 +97,45 @@ class Joystick { //Class copied from lecture notes and then built on top of to m
 };
 Joystick stick(A2, A3, A4, A5, D4);
 
+QEI encoder_A(PB_4, PB_5, NC, 512);
+QEI encoder_B(PB_3, PA_10, NC, 512);
+
 int main() {
-    // Start with motors off
+    // Start with everything off
     motor_enable = 0;
 
+    // Turn motor fully on
+    
     motor_pwm_a.period_us(100); //Each pulse lasts 0.1ms
-    motor_pwm_b.period_us(100);
+    motor_pwm_b.period_us(100); //Each pulse lasts 0.1ms
 
     //Set the motor to run in unipolar mode
     motor_bipolar_a = 0;
     motor_bipolar_b = 0;
     
     //Set the directions to go forward
-    motor_dir_a = 1; //0 goes back, 1 forwards
-    motor_dir_b = 1;
+    motor_dir_a = 0; //goes back
+    motor_dir_b = 0;
 
     while (true) {
         //Make it run for ever
 
-        if (stick.firePressed()==1) { //Create an on/off button
+        if (stick.firePressed()==1) {
             motor_enable = !motor_enable;
             wait(0.5);
         };
 
-        //Testing the values from the potentiomenters and display on the LCD screen
-        lcd.locate(1,10);
+        //Print the potentiometer values 
+        lcd.locate(1,1);
         lcd.printf("%.2f and %.2f", potL1.amplitudeNorm(), potR1.amplitudeNorm());   
         
-        //Motors will run with a PWM based on the 0-1 value from the potentiomenters
+        //Print the encoder values
+        lcd.locate(1, 10);
+        lcd.printf("%d and %d", encoder_A.getPulses()/512, encoder_B.getPulses()/512);
+
         motor_pwm_a = potL1.amplitudeNorm();
         motor_pwm_b = potR1.amplitudeNorm();
+    
+        // wait(0.1);
     };
 }
