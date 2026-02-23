@@ -1,7 +1,7 @@
 #include "mbed.h" //https://os.mbed.com/docs/mbed-os/v6.16/debug-test/visual-studio-code.html
 #include "C12832.h" //Library to control shield board
 #include "QEI.h"  //Library to read motor encoders
-
+#include "math.h"
 
 // This code is for testing the motor control on the board. It will turn the motor on at full speed and keep it running indefinitely.
 DigitalOut motor_enable(PB_2);   // Enable 
@@ -13,6 +13,7 @@ DigitalOut motor_bipolar_a(PC_8);     // Bipolar
 DigitalOut motor_bipolar_b(PC_6);     // Bipolar 
 
 C12832 lcd(PA_7, PA_5, PA_6, PA_8, PB_6);
+#define wheel 25.12/512
 
 class Potentiometer { //Begin updated potentiometer class definition
     private: //Private data member declaration
@@ -101,6 +102,36 @@ Joystick stick(PA_4, PB_0, PC_1, PC_0, PB_5);
 QEI encoder_A(PC_10, PC_12, NC, 512);
 QEI encoder_B(PA_13, PA_14, NC, 512);
 
+//The program to go in a forward line
+void forward(int length) { //Takes length of going forward from the main code
+    encoder_A.reset(); //Reset encoder to 0
+    motor_enable = 1; //Starts the motor
+    while((encoder_A.getPulses()*wheel) < length) { //Move both wheels based on one encoders data
+        motor_pwm_a = 0.8;
+        motor_pwm_b = 0.8;
+    }
+    motor_enable = 0; //Stop motors
+    wait(0.1);
+    return;
+}
+
+//The program turns in a direction
+void turn(bool direction, int multiplier){
+    encoder_A.reset();
+    motor_dir_a = direction;
+    motor_dir_b = !direction;
+    motor_enable = 1;
+    while(abs(encoder_A.getPulses())*wheel < 20*multiplier) {
+        motor_pwm_a = 0.8;
+        motor_pwm_b = 0.8;
+    }
+    motor_enable = 0;
+    motor_dir_a = 1; //Reset both motors to go forwards
+    motor_dir_b = 1;
+    wait(0.1);
+    return;
+}
+
 int main() {
     // Start with everything off
     motor_enable = 0;
@@ -114,8 +145,8 @@ int main() {
     motor_bipolar_a = 0;
     motor_bipolar_b = 0;
     
-    //Set the directions to go forward
-    motor_dir_a = 1; //goes back
+    //Set the directions to go forward = 1
+    motor_dir_a = 1; 
     motor_dir_b = 1;
 
     while (true) {
@@ -130,13 +161,33 @@ int main() {
         lcd.locate(1,1);
         lcd.printf("%.2f and %.2f", potL1.amplitudeNorm(), potR1.amplitudeNorm());   
         
-        //Print the encoder values
+        //Print the encoder values assumed 80mm diameter
+        // float wheel = 25.12/512;
         lcd.locate(1, 10);
-        lcd.printf("%d and %d", encoder_A.getPulses()/512, encoder_B.getPulses()/512);
+        lcd.printf("%.2f and %.2f", encoder_A.getPulses()*wheel, encoder_B.getPulses()*wheel);
 
         motor_pwm_a = potL1.amplitudeNorm();
         motor_pwm_b = potR1.amplitudeNorm();
-    
-        // wait(0.1);
+
+        if(stick.upPressed()==1) {
+            lcd.locate(1,20);
+            lcd.printf("yes");
+            bool turn_dir = 1; //1 turns right, 0 turns left
+            forward(50); //Moves 50cm forward then turns 90*
+            turn(turn_dir, 1);
+            forward(50);
+            turn(turn_dir, 1);
+            forward(50);
+            turn(turn_dir, 1);
+            forward(50); 
+            turn(turn_dir, 2); //Turn 180 around
+            forward(50);
+            turn(!turn_dir, 1);
+            forward(50);
+            turn(!turn_dir, 1);
+            forward(50);
+            turn(!turn_dir, 1);
+            forward(50);            
+        }
     };
 }
