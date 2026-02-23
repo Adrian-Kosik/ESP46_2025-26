@@ -12,7 +12,7 @@ DigitalOut motor_dir_b(PB_13);      // DIR
 DigitalOut motor_bipolar_a(PC_8);     // Bipolar
 DigitalOut motor_bipolar_b(PC_6);     // Bipolar 
 
-C12832 lcd(D11, D13, D12, D7, D10);
+C12832 lcd(PA_7, PA_5, PA_6, PA_8, PB_6);
 
 class Potentiometer { //Begin updated potentiometer class definition
     private: //Private data member declaration
@@ -60,8 +60,8 @@ class SamplingPotentiometer : public Potentiometer {
         }
 };
 
-SamplingPotentiometer potL1(A0, 3.3, 20);
-SamplingPotentiometer potR1(A1, 3.3, 20);
+SamplingPotentiometer potL1(PA_0, 3.3, 20);
+SamplingPotentiometer potR1(PA_1, 3.3, 20);
 
 class Joystick { //Class copied from lecture notes and then built on top of to make it work
     private: 
@@ -95,10 +95,11 @@ class Joystick { //Class copied from lecture notes and then built on top of to m
             } else
                 return false; }
 };
-Joystick stick(A2, A3, A4, A5, D4);
+Joystick stick(PA_4, PB_0, PC_1, PC_0, PB_5);
 
-QEI encoder_A(PB_4, PB_5, NC, 512);
-QEI encoder_B(PB_3, PA_10, NC, 512);
+// Using QEI class
+QEI encoder_A(PC_10, PC_12, NC, 512);
+QEI encoder_B(PA_13, PA_14, NC, 512);
 
 int main() {
     // Start with everything off
@@ -114,8 +115,8 @@ int main() {
     motor_bipolar_b = 0;
     
     //Set the directions to go forward
-    motor_dir_a = 0; //goes back
-    motor_dir_b = 0;
+    motor_dir_a = 1; //goes back
+    motor_dir_b = 1;
 
     while (true) {
         //Make it run for ever
