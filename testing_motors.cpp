@@ -13,7 +13,6 @@ DigitalOut motor_bipolar_a(PC_8);     // Bipolar
 DigitalOut motor_bipolar_b(PC_6);     // Bipolar 
 
 C12832 lcd(PA_7, PA_5, PA_6, PA_8, PB_6);
-#define wheel 25.12/512
 
 class Potentiometer { //Begin updated potentiometer class definition
     private: //Private data member declaration
@@ -103,10 +102,10 @@ QEI encoder_A(PC_10, PC_12, NC, 512);
 QEI encoder_B(PA_13, PA_14, NC, 512);
 
 //The program to go in a forward line
-void forward(int length) { //Takes length of going forward from the main code
+void forward(int length, float wheel) { //Takes length of going forward from the main code
     encoder_A.reset(); //Reset encoder to 0
     motor_enable = 1; //Starts the motor
-    while((encoder_A.getPulses()*wheel) < length) { //Move both wheels based on one encoders data
+    while((encoder_A.getPulses()*wheel/512) < length) { //Move both wheels based on one encoders data
         motor_pwm_a = 0.8;
         motor_pwm_b = 0.8;
     }
@@ -116,12 +115,12 @@ void forward(int length) { //Takes length of going forward from the main code
 }
 
 //The program turns in a direction
-void turn(bool direction, int multiplier){
+void turn(bool direction, float turn_dis, float wheel){
     encoder_A.reset();
     motor_dir_a = direction;
     motor_dir_b = !direction;
     motor_enable = 1;
-    while(abs(encoder_A.getPulses())*wheel < 20*multiplier) {
+    while(abs(encoder_A.getPulses())*wheel/512 < turn_dis) {
         motor_pwm_a = 0.8;
         motor_pwm_b = 0.8;
     }
@@ -135,6 +134,9 @@ void turn(bool direction, int multiplier){
 int main() {
     // Start with everything off
     motor_enable = 0;
+
+    //Define the circumference of the wheel
+    float wheel = 25.1;
 
     // Turn motor fully on
     
@@ -169,25 +171,41 @@ int main() {
         motor_pwm_a = potL1.amplitudeNorm();
         motor_pwm_b = potR1.amplitudeNorm();
 
+        //Testing the turn distance to get a 90* angle
+        float turn_dis = 20.0;
+
         if(stick.upPressed()==1) {
             lcd.locate(1,20);
             lcd.printf("yes");
             bool turn_dir = 1; //1 turns right, 0 turns left
-            forward(50); //Moves 50cm forward then turns 90*
-            turn(turn_dir, 1);
-            forward(50);
-            turn(turn_dir, 1);
-            forward(50);
-            turn(turn_dir, 1);
-            forward(50); 
-            turn(turn_dir, 2); //Turn 180 around
-            forward(50);
-            turn(!turn_dir, 1);
-            forward(50);
-            turn(!turn_dir, 1);
-            forward(50);
-            turn(!turn_dir, 1);
-            forward(50);            
+            forward(50, wheel); //Moves 50cm forward then turns 90*
+            turn(turn_dir, turn_dis, wheel);
+            forward(50, wheel);
+            turn(turn_dir, turn_dis, wheel);
+            forward(50, wheel);
+            turn(turn_dir, turn_dis, wheel);
+            forward(50, wheel); 
+            turn(turn_dir, turn_dis, wheel); //Turn 180 around
+            forward(50, wheel);
+            turn(!turn_dir, turn_dis, wheel);
+            forward(50, wheel);
+            turn(!turn_dir, turn_dis, wheel);
+            forward(50, wheel);
+            turn(!turn_dir, turn_dis, wheel);
+            forward(50, wheel);  
+            lcd.cls();          
         }
+
+        //For testing, change the circumference of the wheel to get the correct distance 
+        //When finished testing the circumference, change "wheel" to "turn_dis" to test for distance needed to turn a 90* angle starting from 20cm
+        if(stick.leftPressed()) {
+            wheel = wheel - 0.1;
+        }
+        if(stick.rightPressed()) {
+            wheel = wheel + 0.1;
+        }
+
+        lcd.locate(16,20);
+        lcd.printf("Wheel = %.1f", wheel);
     };
 }
