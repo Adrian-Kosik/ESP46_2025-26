@@ -1,3 +1,4 @@
+
 #include "mbed.h" //https://os.mbed.com/docs/mbed-os/v6.16/debug-test/visual-studio-code.html
 #include "C12832.h" //Library to control shield board
 #include "QEI.h"  //Library to read motor encoders
@@ -110,7 +111,7 @@ void forward(int length, float wheel) { //Takes length of going forward from the
         motor_pwm_b = 0.8;
     }
     motor_enable = 0; //Stop motors
-    wait(0.1);
+    wait(0.4);
     return;
 }
 
@@ -121,13 +122,13 @@ void turn(bool direction, float turn_dis, float wheel){
     motor_dir_b = !direction;
     motor_enable = 1;
     while(abs(encoder_A.getPulses())*wheel/512 < turn_dis) {
-        motor_pwm_a = 0.8;
-        motor_pwm_b = 0.8;
+        motor_pwm_a = 0.70;
+        motor_pwm_b = 0.70;
     }
     motor_enable = 0;
-    motor_dir_a = 1; //Reset both motors to go forwards
-    motor_dir_b = 1;
-    wait(0.1);
+    motor_dir_a = 0; //Reset both motors to go forwards
+    motor_dir_b = 0;
+    wait(0.4);
     return;
 }
 
@@ -136,8 +137,8 @@ int main() {
     motor_enable = 0;
 
     //Define the circumference of the wheel
-    float wheel = 25.1;
-
+    float wheel = 27;
+    float turn_dis = 13.4;
     // Turn motor fully on
     
     motor_pwm_a.period_us(100); //Each pulse lasts 0.1ms
@@ -148,8 +149,8 @@ int main() {
     motor_bipolar_b = 0;
     
     //Set the directions to go forward = 1
-    motor_dir_a = 1; 
-    motor_dir_b = 1;
+    motor_dir_a = 0; 
+    motor_dir_b = 0;
 
     while (true) {
         //Make it run for ever
@@ -166,18 +167,19 @@ int main() {
         //Print the encoder values assumed 80mm diameter
         // float wheel = 25.12/512;
         lcd.locate(1, 10);
-        lcd.printf("%.2f and %.2f", encoder_A.getPulses()*wheel, encoder_B.getPulses()*wheel);
+        lcd.printf("%.2f and %.2f", encoder_A.getPulses()*wheel/512, encoder_B.getPulses()*wheel/512);
 
         motor_pwm_a = potL1.amplitudeNorm();
         motor_pwm_b = potR1.amplitudeNorm();
 
         //Testing the turn distance to get a 90* angle
-        float turn_dis = 20.0;
+        
 
         if(stick.upPressed()==1) {
             lcd.locate(1,20);
             lcd.printf("yes");
-            bool turn_dir = 1; //1 turns right, 0 turns left
+            wait(1);
+            bool turn_dir = 0; //1 turns right, 0 turns left
             forward(50, wheel); //Moves 50cm forward then turns 90*
             turn(turn_dir, turn_dis, wheel);
             forward(50, wheel);
@@ -185,7 +187,7 @@ int main() {
             forward(50, wheel);
             turn(turn_dir, turn_dis, wheel);
             forward(50, wheel); 
-            turn(turn_dir, turn_dis, wheel); //Turn 180 around
+            turn(turn_dir, 2.3*turn_dis, wheel); //Turn 180 around
             forward(50, wheel);
             turn(!turn_dir, turn_dis, wheel);
             forward(50, wheel);
@@ -199,13 +201,13 @@ int main() {
         //For testing, change the circumference of the wheel to get the correct distance 
         //When finished testing the circumference, change "wheel" to "turn_dis" to test for distance needed to turn a 90* angle starting from 20cm
         if(stick.leftPressed()) {
-            wheel = wheel - 0.1;
+            turn_dis = turn_dis - 0.1;
         }
         if(stick.rightPressed()) {
-            wheel = wheel + 0.1;
+            turn_dis = turn_dis + 0.1;
         }
 
         lcd.locate(16,20);
-        lcd.printf("Wheel = %.1f", wheel);
+        lcd.printf("turn_dis = %.1f", turn_dis);
     };
 }
