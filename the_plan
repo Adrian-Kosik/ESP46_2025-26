@@ -27,6 +27,22 @@ PC_12 - Encoder_A - B
 PA_13 - Encoder_B - A
 PA_14 - Encoder_B - B 
 
+TD2
+1. Completed sensor circuit board (10) - Ethan working on it
+
+2. Measurement of wheel velocitu (15) - Cheng working on it
+
+3. Demonstration of sensor outputs (20) - COMPLETED
+
+4. Interfacing of microcontroller (15) = Sam is working on it
+
+5. Plan for system robustness (10) - need to make plan
+
+6. Microcontroller response to a BLE command (10) - COMPLETED (might need change from LCD)
+
+7. Presentation (20)
+
+
 TD1
 1. Successful use of PWM output (10) - Show run-time control of duty cycle on oscilloscope [Both of T1s L testpoint] - WORKING
 
