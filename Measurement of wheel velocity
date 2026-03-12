@@ -1,1 +1,65 @@
+#include "mbed.h"
+#include "C12832.h"
+#include "QEI.h"
+#include "math.h"
 
+
+C12832 lcd(PA_7, PA_5, PA_6, PA_8, PB_6);
+
+
+QEI encoder_A(PC_10, PC_12, NC, 512);
+QEI encoder_B(PA_13, PA_14, NC, 512);
+
+
+Timer timer;
+
+int main()
+{
+    lcd.cls();
+
+    const float wheel_circumference = 0.27f;   
+    const int pulses_per_rev = 512;
+
+    const float dt = 0.1f;   
+
+    int lastA = 0;
+    int lastB = 0;
+
+    
+    const int dirA = -1;
+    const int dirB = 1;
+
+    timer.start();
+
+    while (true) {
+
+        if (timer.read() >= dt) {
+
+            int currentA = encoder_A.getPulses();
+            int currentB = encoder_B.getPulses();
+
+            int deltaA = currentA - lastA;
+            int deltaB = currentB - lastB;
+
+            lastA = currentA;
+            lastB = currentB;
+
+            float velocityA = dirA * (deltaA * wheel_circumference) / (pulses_per_rev * dt);
+            float velocityB = dirB * (deltaB * wheel_circumference) / (pulses_per_rev * dt);
+
+            
+            if (fabs(velocityA) < 0.005f) velocityA = 0.0f;
+            if (fabs(velocityB) < 0.005f) velocityB = 0.0f;
+
+            lcd.cls();
+
+            lcd.locate(0,0);
+            lcd.printf("Wheel A: %.2f m/s", velocityA);
+
+            lcd.locate(0,12);
+            lcd.printf("Wheel B: %.2f m/s", velocityB);
+
+            timer.reset();
+        }
+    }
+}
