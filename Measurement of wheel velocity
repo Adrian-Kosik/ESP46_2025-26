@@ -3,63 +3,196 @@
 #include "QEI.h"
 #include "math.h"
 
+// -------------------- Motor control pins --------------------
+DigitalOut motor_enable(PB_2);
+PwmOut motor_pwm_a(PA_11);
+PwmOut motor_pwm_b(PB_15);
+DigitalOut motor_dir_a(PB_14);
+DigitalOut motor_dir_b(PB_13);
+DigitalOut motor_bipolar_a(PC_8);
+DigitalOut motor_bipolar_b(PC_6);
 
+// -------------------- LCD --------------------
 C12832 lcd(PA_7, PA_5, PA_6, PA_8, PB_6);
 
+// -------------------- Potentiometer classes --------------------
+class Potentiometer {
+private:
+    AnalogIn inputSignal;
+    float VDD, currentSampleNorm, currentSampleVolts;
 
+public:
+    Potentiometer(PinName pin, float v)
+        : inputSignal(pin), VDD(v), currentSampleNorm(0.0f), currentSampleVolts(0.0f) {}
+
+    float amplitudeVolts(void) {
+        return inputSignal.read() * VDD;
+    }
+
+    float amplitudeNorm(void) {
+        return inputSignal.read();
+    }
+
+    void sample(void) {
+        currentSampleNorm = inputSignal.read();
+        currentSampleVolts = currentSampleNorm * VDD;
+    }
+
+    const float getCurrentSampleNorm(void) {
+        return currentSampleNorm;
+    }
+
+    const float getCurrentSampleVolts(void) {
+        return currentSampleVolts;
+    }
+};
+
+class SamplingPotentiometer : public Potentiometer {
+private:
+    float samplingFrequency, samplingPeriod;
+    Ticker sampler;
+
+public:
+    SamplingPotentiometer(PinName p, float v, float fs)
+        : Potentiometer(p, v), samplingFrequency(fs) {
+        samplingPeriod = 1.0f / samplingFrequency;
+        sampler.attach(callback(this, &Potentiometer::sample), samplingPeriod);
+    }
+};
+
+SamplingPotentiometer potL1(PA_0, 3.3, 20);
+SamplingPotentiometer potR1(PA_1, 3.3, 20);
+
+// -------------------- Joystick class --------------------
+class Joystick {
+private:
+    DigitalIn up, down, left, right, fire;
+
+public:
+    Joystick(PinName u, PinName d, PinName l, PinName r, PinName f)
+        : up(u), down(d), left(l), right(r), fire(f) {}
+
+    bool upPressed(void)   { return (up == 1); }
+    bool downPressed(void) { return (down == 1); }
+    bool leftPressed(void) { return (left == 1); }
+    bool rightPressed(void){ return (right == 1); }
+    bool firePressed(void) { return (fire == 1); }
+};
+
+Joystick stick(PA_4, PB_0, PC_1, PC_0, PB_5);
+
+// -------------------- Encoders --------------------
 QEI encoder_A(PC_10, PC_12, NC, 512);
 QEI encoder_B(PA_13, PA_14, NC, 512);
 
+// -------------------- Motion helper functions --------------------
+void forward(int length, float wheel) {
+    encoder_A.reset();
+    motor_enable = 1;
 
-Timer timer;
+    while ((encoder_A.getPulses() * wheel / 512.0f) < length) {
+        motor_pwm_a = 0.8f;
+        motor_pwm_b = 0.8f;
+    }
 
-int main()
-{
+    motor_enable = 0;
+    wait_us(400000);
+}
+
+void turn(bool direction, float turn_dis, float wheel) {
+    encoder_A.reset();
+    motor_dir_a = direction;
+    motor_dir_b = !direction;
+    motor_enable = 1;
+
+    while (fabs((float)encoder_A.getPulses()) * wheel / 512.0f < turn_dis) {
+        motor_pwm_a = 0.70f;
+        motor_pwm_b = 0.70f;
+    }
+
+    motor_enable = 0;
+    motor_dir_a = 0;
+    motor_dir_b = 0;
+    wait_us(400000);
+}
+
+
+int main() {
+    motor_enable = 0;
+
+    float wheel = 27.0f;
+    float turn_dis = 13.4f;
+
+    motor_pwm_a.period_us(100);
+    motor_pwm_b.period_us(100);
+
+    motor_bipolar_a = 0;
+    motor_bipolar_b = 0;
+
+    motor_dir_a = 0;
+    motor_dir_b = 0;
+
+    Timer velocityTimer;
+    velocityTimer.start();
+
+    Timer lcdTimer;
+    lcdTimer.start();
+
+    int prevPulsesA = encoder_A.getPulses();
+    int prevPulsesB = encoder_B.getPulses();
+
+    float velocityA = 0.0f;
+    float velocityB = 0.0f;
+
     lcd.cls();
-
-    const float wheel_circumference = 0.27f;   
-    const int pulses_per_rev = 512;
-
-    const float dt = 0.1f;   
-
-    int lastA = 0;
-    int lastB = 0;
-
-    
-    const int dirA = -1;
-    const int dirB = 1;
-
-    timer.start();
+    lcd.locate(0, 0);
+    lcd.printf("P:0.00 0.00");
+    lcd.locate(0, 15);
+    lcd.printf("V:0.00 0.00 m/s");
 
     while (true) {
 
-        if (timer.read() >= dt) {
+        if (stick.firePressed() == 1) {
+            motor_enable = !motor_enable;
+            wait_us(300000);
+        }
 
-            int currentA = encoder_A.getPulses();
-            int currentB = encoder_B.getPulses();
+        
+        motor_pwm_a = potL1.amplitudeNorm();
+        motor_pwm_b = potR1.amplitudeNorm();
 
-            int deltaA = currentA - lastA;
-            int deltaB = currentB - lastB;
+        int currentPulsesA = encoder_A.getPulses();
+        int currentPulsesB = encoder_B.getPulses();
 
-            lastA = currentA;
-            lastB = currentB;
+        
+        float dt = velocityTimer.read();
+        if (dt >= 0.1f) {
+            int deltaPulsesA = currentPulsesA - prevPulsesA;
+            int deltaPulsesB = currentPulsesB - prevPulsesB;
 
-            float velocityA = dirA * (deltaA * wheel_circumference) / (pulses_per_rev * dt);
-            float velocityB = dirB * (deltaB * wheel_circumference) / (pulses_per_rev * dt);
+            velocityA = -(deltaPulsesA * wheel / 512.0f) / dt;
+            velocityB =  (deltaPulsesB * wheel / 512.0f) / dt;
 
-            
             if (fabs(velocityA) < 0.005f) velocityA = 0.0f;
             if (fabs(velocityB) < 0.005f) velocityB = 0.0f;
 
-            lcd.cls();
+            prevPulsesA = currentPulsesA;
+            prevPulsesB = currentPulsesB;
 
-            lcd.locate(0,0);
-            lcd.printf("Wheel A: %.2f m/s", velocityA);
-
-            lcd.locate(0,12);
-            lcd.printf("Wheel B: %.2f m/s", velocityB);
-
-            timer.reset();
+            velocityTimer.reset();
         }
+
+        
+        if (lcdTimer.read() >= 0.15f) {
+            lcd.locate(0, 0);
+            lcd.printf("P:%1.2f %1.2f   ", potL1.amplitudeNorm(), potR1.amplitudeNorm());
+
+            lcd.locate(0, 15);
+            lcd.printf("Velocity:%1.2f %1.2fcm/s   ", velocityA, velocityB);
+
+            lcdTimer.reset();
+        }
+
+        wait_us(10000);
     }
 }
