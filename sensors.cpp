@@ -6,12 +6,7 @@
 
 Serial pc(USBTX, NC); // Creates an instance of a Serial Connection with default parameters
 // NC is used as this example uses simplex link where the PC only receives data
-InterruptIn button(D4); // Create an InterruptIn associated with the centre pin of the joystick
-volatile bool trigger_flag = false; // A volatile boolean flag to indicate when our ISR has triggered.
-void buttonISR() // The ISR for the InterruptIn. This function has minimal code for efficiency
-{
- trigger_flag=true; // A single flag is set to indicate that the button has been pressed.
-}
+
 float Output[6];
 class Sensor {
     private:
@@ -26,7 +21,7 @@ class Sensor {
         void GetValue(void)
         {
             control = 1;
-            // wait(0.05);
+            wait(0.02);
             Output[i] = inputSignal.read();
             control = 0;
             return;
@@ -47,15 +42,13 @@ class SamplingSensor : public Sensor{
         }
 };
 
-#define SAMPFREQ 2
-SamplingSensor Sens0(A0, PC_10, SAMPFREQ, 0);
-SamplingSensor Sens1(A1, PC_10, SAMPFREQ, 1);
-SamplingSensor Sens2(A2, PC_12, SAMPFREQ, 2);
-SamplingSensor Sens3(A3, PC_10, SAMPFREQ, 3);
-SamplingSensor Sens4(A4, PC_12, SAMPFREQ, 4);
-SamplingSensor Sens5(A5, PC_12, SAMPFREQ, 5);
-
-
+#define SAMPFREQ 4
+SamplingSensor Sens0(PA_0, PA_5, SAMPFREQ, 0);
+SamplingSensor Sens1(PA_1, PA_6, SAMPFREQ, 1);
+SamplingSensor Sens2(PA_4, PA_7, SAMPFREQ, 2);
+SamplingSensor Sens3(PB_0, PB_6, SAMPFREQ, 3);
+SamplingSensor Sens4(PC_1, PC_7, SAMPFREQ, 4);
+SamplingSensor Sens5(PC_0, PA_9, SAMPFREQ, 5);
 
 
 
@@ -67,18 +60,14 @@ int main() {
     while(1){        
        
     pc.printf("values: ");
-    Darkest[0] = 0; 
-    Darkest[1] = 0;
+    
     //calculate which pin(1-4) has highest value
     for(int i = 1; i<5; i++){
         pc.printf("%.2f, ", Output[i]);
-        if(Output[i]>Darkest[1]){
-            Darkest[1] = Output[i];
-            Darkest[0] = i;
-        }
+        i
     }
 
-    pc.printf("  Darkest value is pin %.0f \r\n", Darkest[0]);
+    pc.printf("\r\n");
 
 
     }
