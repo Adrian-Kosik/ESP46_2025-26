@@ -48,12 +48,12 @@ class SamplingSensor : public Sensor{
 };
 
 #define SAMPFREQ 2
-//SamplingSensor Sens0(A0, PC_10, SAMPFREQ, 0);
+SamplingSensor Sens0(A0, PC_10, SAMPFREQ, 0);
 SamplingSensor Sens1(A1, PC_10, SAMPFREQ, 1);
 SamplingSensor Sens2(A2, PC_12, SAMPFREQ, 2);
 SamplingSensor Sens3(A3, PC_10, SAMPFREQ, 3);
 SamplingSensor Sens4(A4, PC_12, SAMPFREQ, 4);
-//SamplingSensor Sens5(A5, PC_12, SAMPFREQ, 5);
+SamplingSensor Sens5(A5, PC_12, SAMPFREQ, 5);
 
 
 
