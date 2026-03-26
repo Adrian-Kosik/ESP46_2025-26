@@ -1,5 +1,4 @@
 #include "mbed.h" //https://os.mbed.com/docs/mbed-os/v6.16/debug-test/visual-studio-code.html
-#include "C12832.h" //Library to control shield board
 #include "QEI.h"  //Library to read motor encoders
 #include "math.h"
 
@@ -55,8 +54,6 @@ SamplingSensor Sens5(PC_0, PA_9, SAMPFREQ, 5);
 int main() {
     pc.printf("Microcontroller program running...\r\n");
     
-    //float Output[6];
-    float Darkest[2]; //0:Pin number, 1:pin value
     while(1){        
        
     pc.printf("values: ");
